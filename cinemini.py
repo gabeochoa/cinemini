@@ -8,7 +8,7 @@ import time
 
 def cinemini(inputfile):
 	starttime = time.time()
-	vidfile, outputsrt = TP.process_srt(inputfile)
+	vidfile, outputsrt = TP.process_srt(inputfile) #reads file name
 	#print outputsrt
 
 	#if(vidfile != None):
