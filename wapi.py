@@ -77,4 +77,4 @@ def main():
 		print("Found page: "),
 		print(page.title)
 		print(util_get_plot(page))
-main()
+		
