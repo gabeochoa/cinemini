@@ -1,10 +1,18 @@
 from collections import OrderedDict
 import os
 import re
+import wapi
+import util
+import operator
+
 debug = True
 
 usable_extensions = ['mp4', 'avi', 'mov', 'mkv', 'm4v']
 
+
+#text vars
+def getKey(item):
+	return item[0]
 
 def process_srt(filename):
 	srtfile = get_subtitle_files(filename)
@@ -28,51 +36,128 @@ def process_srt(filename):
 	lines = clean_srt(srtfile)
 
 	if lines:
-		# Iterate over each line in the current subtitles file.
-		for timespan in lines.keys():
-			line = lines[timespan].strip()
+		outlines = process_wiki_sum(srtfile.replace('.srt', ''), lines)
 
-			if(process_line(line)):
-				output[timespan] = line
+		print len(lines)
+		print len(outlines)
+
+		# Iterate over each line in the current subtitles file.
+		for l, o in outlines:
+			for timespan in lines.keys():
+				line = lines[timespan].strip()
+
+				if(timespan == o):
+					output[timespan] = line
 	# If no subtitles were found in the current file.
 	else:
 		if debug:
 			print "[!] Subtitle file '" + srt + "' is empty."
+		return (None, None)
 
+	output = OrderedDict(sorted(output.items(), key=lambda t: t[0]))
+
+	print len(output)
 	return (videofile, output)
 
-def process_line(Line):
-	# check if we need line or not
-	return True
+def process_wiki_sum(filename, lines):
 
+	#print "Setup Text Process."
+		
+	name = (filename.split('/'))
+	title = name[len(name)-1]
+	allParagraphs = wapi.get_plot(title).split("\n")
 
-'''
+	paramap = dict()
+	output = []
+	templines = [] 
+	templines2 = [] 
+	vals = []
+
+	#for each paragraph
 	for i in range(len(allParagraphs)):
+		
+		#for each word in paragraph
+		for w in allParagraphs[i].split(' '):
+			#check occurence of each word
+			numTimes = 0
+			for w2 in allParagraphs[i].split(' '):
+				if w2 == w:
+					numTimes+=1
 
-	for w in words:
-		int numTimes = 0
-		for w2 in words:
-			if w2 == w:
-				numTimes++
+			#put it in map
+			paramap.update({w : numTimes})
+			vals.append(numTimes)
 
-		map[w] = numTimes #Not python syntax
+		#print "Word map generated ",
+	
 
-	words.sortByNumTimes()
+		#words.sortByNumTimes()
+		paramap = dict(sorted(paramap.items(), key=operator.itemgetter(1), reverse = True))
+		avg = sum(vals)/ len(vals)
 
-	for w in words:
-		if w.numTimes < (len(words) - 1)) /2:
-			words.remove(w) #make copy of words, can't iterate and remove from list
+		for key in paramap:
+			if paramap[key] > avg:
+				for timespan in lines.keys():
+					line = lines[timespan].strip()
+					if line.find(key) != -1:
+						templines.append((line, timespan))
+			else:
+				continue
+		
+		#print "Word map filtered ",
+	
 
-	words.sortByTime()
+		difflist = []
+		for (line, timespan) in templines:
+			first = timespan[0:12]
+			second = timespan[16:]
 
-	for i in range(len(words) - 1):
-		if !(words(i+1).timestamp - words(i).timestamp > 5):
-			words.remove(words(i))
+			fint = util.cvsecs(first)
+			sint = util.cvsecs(second)
+			diff = sint - fint
+			difflist.append(diff)
 
-	words.removeBetweenTimeStamps(len(subtitles)/i, 2 * len(subtitles))
+		avg2 = sum(difflist)/ len(difflist)
+		
+		clusters = []
+		cluster = 0
+		for (line, timespan) in templines:
+			first = timespan[0:12]
+			second = timespan[16:]
 
-'''
+			fint = util.cvsecs(first)
+			sint = util.cvsecs(second)
+			diff = sint - fint
 
+			if(diff > avg2):
+				clusters.append(templines2)
+				cluster += 1
+				continue;
+			else:
+				templines2.append( (line, timespan))
+
+		#print "Clusters Generated ",
+	
+		
+		#output lines in cluster closes to paragraph
+		pindratio = (i/len(allParagraphs)) #percentage of way through plot
+		clusind = len(clusters) * pindratio
+
+		for lin in clusters[clusind]:
+			output.append(lin)
+
+		#print "Output complete "
+
+		'''
+		for i in range(len(words) - 1):
+			if not (words(i+1).timestamp - words(i).timestamp > 5):
+				words.remove(words(i))
+
+		words.removeBetweenTimeStamps(len(subtitles)/i, 2 * len(subtitles))
+
+		'''
+
+	return output
 
 
 
