@@ -49,6 +49,11 @@ def get_plot(film):
 
 
 def main():
+
+	print toHtml("\(")
+
+	return 
+
 	print("Running summary test")
 	for film in art:
 		print(film + " "), 

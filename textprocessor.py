@@ -7,6 +7,22 @@ import operator
 import string
 from vaderSentiment.vaderSentiment import sentiment as vaderSentiment
 
+from pattern.search import match
+from pattern.search import search
+from pattern.en import parsetree
+from pattern.search import Pattern
+
+rmpat = ["CC","CD","DT","FW","IN","LS","PRP","PRP$","SYM","TO","UH","WRB","INTJ","PART","ADVP"]
+
+def notneeded(word):
+	print word, 
+	for pos in rmpat:
+		p = Pattern.fromstring(pos)
+		if(p.scan(word)):
+			print " " + pos
+			return True
+	return False
+		
 debug = True
 
 usable_extensions = ['mp4', 'avi', 'mov', 'mkv', 'm4v']
@@ -62,13 +78,15 @@ def process_srt(filename):
 
 	output = OrderedDict(sorted(output.items(), key=lambda t: t[0]))
 
-	print len(output)
+	#print len(output)
 	return (videofile, output)
 
 def process_wiki_sum(filename, lines):
 
-	#print "Setup Text Process."
-		
+
+
+def process_wiki_sum_old(filename, lines):
+
 	name = (filename.split('/'))
 	title = name[len(name)-1]
 	allParagraphs = wapi.get_plot(title).split("\n")
@@ -88,11 +106,14 @@ def process_wiki_sum(filename, lines):
 			#check occurence of each word
 			numTimes = 0
 			w = removePunc(w)
+
+			if(notneeded(w)):
+				continue
+	
 			for w2 in allParagraphs[i].split(' '):
 				w2 = removePunc(w2)
 				if w2.find(w) != -1 or w.find(w2) != -1:
 					numTimes+=1
-
 			#put it in map
 			try:
 				paramap[w] += numTimes
@@ -110,6 +131,7 @@ def process_wiki_sum(filename, lines):
 	#print paramap
 	#print paramap2
 	return []
+
 
 
 '''
