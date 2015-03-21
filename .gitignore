@@ -1,1 +1,4 @@
 *.pyc
+*.mp4
+video/*
+output/*
