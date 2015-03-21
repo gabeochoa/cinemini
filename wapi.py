@@ -4,12 +4,12 @@ import cgi
 import json
 import requests
 
-art = ["Step Brothers"]#, "In Time", "Thor", "Iron Man", "Drive"]
+art = ["Step Brothers", "In Time", "Thor", "Iron Man", "21 Jump Street"]
 
-def get_summary(Article):
+def util_get_summary(Article):
 	return wikipedia.summary(Article)
 
-def get_plot(Page):
+def util_get_plot(Page):
 	return Page.section("Plot")
 
 def toHtml(string):
@@ -30,6 +30,24 @@ def getPageFromJson(apireq, searchstr):
 		if str(i['title']).find(searchstr) != -1:
 			return (wikipedia.search(i['title'], 1))[0]
 
+
+def get_summary(film):
+	try:
+		page = wikipedia.page(film)
+	except(wikipedia.exceptions.DisambiguationError):
+		apireq = "http://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srsearch="+toHtml(film)+"+incategory:English-language_films"
+		page = wikipedia.page(getPageFromJson(apireq, film))
+	return util_get_summary(page.title)
+
+def get_plot(film):
+	try:
+		page = wikipedia.page(film)
+	except(wikipedia.exceptions.DisambiguationError):
+		apireq = "http://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srsearch="+toHtml(film)+"+incategory:English-language_films"
+		page = wikipedia.page(getPageFromJson(apireq, film))
+	return util_get_plot(page)		
+
+
 def main():
 	print("Running summary test")
 	for film in art:
@@ -40,11 +58,11 @@ def main():
 		except(wikipedia.exceptions.DisambiguationError):
 			apireq = "http://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srsearch="+toHtml(film)+"+incategory:English-language_films"
 			page = wikipedia.page(getPageFromJson(apireq, film))
-
+		
 		print("Found page: "),
 		print(page.title)
 
-		print(get_summary(page.title))
+		print(util_get_summary(page.title)[0:20])
 
 
 	print("Running Plot test")
@@ -56,10 +74,7 @@ def main():
 		except(wikipedia.exceptions.DisambiguationError):
 			apireq = "http://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srsearch="+toHtml(film)+"+incategory:English-language_films"
 			page = wikipedia.page(getPageFromJson(apireq, film))
-
 		print("Found page: "),
 		print(page.title)
-		print(get_plot(page))
-
-
+		print(util_get_plot(page))
 main()
