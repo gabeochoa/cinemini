@@ -9,13 +9,17 @@ import time
 def cinemini(inputfile):
 	starttime = time.time()
 	vidfile, outputsrt = TP.process_srt(inputfile)
-	if(vidfile != None):
-		VP.editfilm(vidfile, outputsrt)
 	#print outputsrt
-	print( str(time.time() - starttime) + " seconds")
 
+	#if(vidfile != None):
+	#	VP.editfilm(vidfile, outputsrt)
+	#print outputsrt
+	#print( str(time.time() - starttime) + " seconds")
 
 	return
+
+
+
 
 
 

@@ -4,11 +4,17 @@ import re
 import wapi
 import util
 import operator
+import string
+from vaderSentiment.vaderSentiment import sentiment as vaderSentiment
 
 debug = True
 
 usable_extensions = ['mp4', 'avi', 'mov', 'mkv', 'm4v']
 
+
+def removePunc(word):
+	exclude = set(string.punctuation)
+	return ''.join(ch for ch in word if ch not in exclude)
 
 #text vars
 def getKey(item):
@@ -68,6 +74,7 @@ def process_wiki_sum(filename, lines):
 	allParagraphs = wapi.get_plot(title).split("\n")
 
 	paramap = dict()
+	paramap2 = dict()
 	output = []
 	templines = [] 
 	templines2 = [] 
@@ -80,85 +87,29 @@ def process_wiki_sum(filename, lines):
 		for w in allParagraphs[i].split(' '):
 			#check occurence of each word
 			numTimes = 0
+			w = removePunc(w)
 			for w2 in allParagraphs[i].split(' '):
-				if w2 == w:
+				w2 = removePunc(w2)
+				if w2.find(w) != -1 or w.find(w2) != -1:
 					numTimes+=1
 
 			#put it in map
-			paramap.update({w : numTimes})
+			try:
+				paramap[w] += numTimes
+			except KeyError:
+				paramap.update({w : numTimes})
+
 			vals.append(numTimes)
 
-		#print "Word map generated ",
+	#print "Word map generated ",
+
+	paramap2 = (sorted(paramap.items(), key=lambda x: x[1], reverse = True))
 	
-
-		#words.sortByNumTimes()
-		paramap = dict(sorted(paramap.items(), key=operator.itemgetter(1), reverse = True))
-		avg = sum(vals)/ len(vals)
-
-		for key in paramap:
-			if paramap[key] > avg:
-				for timespan in lines.keys():
-					line = lines[timespan].strip()
-					if line.find(key) != -1:
-						templines.append((line, timespan))
-			else:
-				continue
-		
-		#print "Word map filtered ",
-	
-
-		difflist = []
-		for (line, timespan) in templines:
-			first = timespan[0:12]
-			second = timespan[16:]
-
-			fint = util.cvsecs(first)
-			sint = util.cvsecs(second)
-			diff = sint - fint
-			difflist.append(diff)
-
-		avg2 = sum(difflist)/ len(difflist)
-		
-		clusters = []
-		cluster = 0
-		for (line, timespan) in templines:
-			first = timespan[0:12]
-			second = timespan[16:]
-
-			fint = util.cvsecs(first)
-			sint = util.cvsecs(second)
-			diff = sint - fint
-
-			if(diff > avg2):
-				clusters.append(templines2)
-				cluster += 1
-				continue;
-			else:
-				templines2.append( (line, timespan))
-
-		#print "Clusters Generated ",
-	
-		
-		#output lines in cluster closes to paragraph
-		pindratio = (i/len(allParagraphs)) #percentage of way through plot
-		clusind = len(clusters) * pindratio
-
-		for lin in clusters[clusind]:
-			output.append(lin)
-
-		#print "Output complete "
-
-		'''
-		for i in range(len(words) - 1):
-			if not (words(i+1).timestamp - words(i).timestamp > 5):
-				words.remove(words(i))
-
-		words.removeBetweenTimeStamps(len(subtitles)/i, 2 * len(subtitles))
-
-		'''
-
-	return output
-
+	for line in paramap2:
+		print line
+	#print paramap
+	#print paramap2
+	return []
 
 
 '''

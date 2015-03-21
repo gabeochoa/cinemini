@@ -36,6 +36,9 @@ def clipVideo(inputfile, outputfile, time1, time2):
 
 #combines all videos in output/temp/ to the outfile
 def combineVideos(outputfile):
+	if not os.path.isdir("output/temp"):
+		os.makedirs("output/temp")
+
 	filelist = os.listdir("output/temp/")
 	cliplist = []
 
