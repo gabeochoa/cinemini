@@ -12,6 +12,13 @@ from pattern.search import search
 from pattern.en import parsetree
 from pattern.search import Pattern
 
+from sumy.parsers.html import HtmlParser
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+from sumy.nlp.stemmers import Stemmer
+from sumy.utils import get_stop_words
+
 rmpat = ["CC","CD","DT","FW","IN","LS","PRP","PRP$","SYM","TO","UH","WRB","INTJ","PART","ADVP"]
 
 def notneeded(word):
@@ -37,6 +44,68 @@ def getKey(item):
 	return item[0]
 
 def process_srt(filename):
+
+	srtfile = get_subtitle_files(filename)
+	
+	for ext in usable_extensions:
+		tempVideoFile = srtfile.replace('.srt', '.' + ext)
+		if os.path.isfile(tempVideoFile):
+			videofile = tempVideoFile
+			foundVideoFile = True
+			if debug:
+				print "[+] Found '" + tempVideoFile + "'."
+
+	output = OrderedDict()
+
+	if not foundVideoFile:
+		return (None, output)
+
+	lines = clean_srt(srtfile)
+	linelist = []
+	linecount = 0
+
+	if lines:
+		LANGUAGE = "english"
+
+		f = open('rawtext.txt', 'w')
+		for timespan in lines.keys():
+			line = lines[timespan].strip()
+			f.write(line + "\n")
+			linecount += 1
+		f.close()
+
+		parser = PlaintextParser.from_file("rawtext.txt", Tokenizer(LANGUAGE))
+		stemmer = Stemmer(LANGUAGE)
+
+		summarizer = Summarizer(stemmer)
+		summarizer.stop_words = get_stop_words(LANGUAGE)
+
+		for sentence in summarizer(parser.document, linecount):
+			linelist.append(sentence)
+
+		for timespan in lines.keys():
+			preline = lines[timespan].strip()
+
+			for afterline in linelist:
+				temp = ""
+				for s in str(afterline):
+					temp += s
+				if temp == preline:
+					output[timespan] = preline
+					#print preline
+					continue
+
+	# If no subtitles were found in the current file.
+	else:
+		if debug:
+			print "[!] Subtitle file '" + srt + "' is empty."
+		return (None, None)
+
+	return (videofile, output)
+
+
+
+def process_srt_old(filename):
 	srtfile = get_subtitle_files(filename)
 
 	if debug:
@@ -81,11 +150,8 @@ def process_srt(filename):
 	#print len(output)
 	return (videofile, output)
 
+
 def process_wiki_sum(filename, lines):
-
-
-
-def process_wiki_sum_old(filename, lines):
 
 	name = (filename.split('/'))
 	title = name[len(name)-1]
@@ -140,23 +206,23 @@ def process_wiki_sum_old(filename, lines):
 '''
 
 def convert_timespan(timespan):
-    """Converts an srt timespan into a start and end timestamp"""
-    start, end = timespan.split('-->')
-    start = convert_timestamp(start)
-    end = convert_timestamp(end)
-    return start, end
+	"""Converts an srt timespan into a start and end timestamp"""
+	start, end = timespan.split('-->')
+	start = convert_timestamp(start)
+	end = convert_timestamp(end)
+	return start, end
 
 
 def convert_timestamp(timestamp):
-    """Converts an srt timestamp into seconds"""
-    timestamp = timestamp.strip()
-    chunk, millis = timestamp.split(',')
-    hours, minutes, seconds = chunk.split(':')
-    hours = int(hours)
-    minutes = int(minutes)
-    seconds = int(seconds)
-    seconds = seconds + hours * 60 * 60 + minutes * 60 + float(millis) / 1000
-    return seconds
+	"""Converts an srt timestamp into seconds"""
+	timestamp = timestamp.strip()
+	chunk, millis = timestamp.split(',')
+	hours, minutes, seconds = chunk.split(':')
+	hours = int(hours)
+	minutes = int(minutes)
+	seconds = int(seconds)
+	seconds = seconds + hours * 60 * 60 + minutes * 60 + float(millis) / 1000
+	return seconds
 
 def clean_srt(srt):
 	"""Removes damaging line breaks and numbers from srt files and returns a dictionary"""

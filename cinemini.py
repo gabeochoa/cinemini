@@ -11,8 +11,8 @@ def cinemini(inputfile):
 	vidfile, outputsrt = TP.process_srt(inputfile) #reads file name
 	#print outputsrt
 
-	#if(vidfile != None):
-	#	VP.editfilm(vidfile, outputsrt)
+	if(vidfile != None):
+		VP.editfilm(vidfile, outputsrt)
 	#print outputsrt
 	#print( str(time.time() - starttime) + " seconds")
 
