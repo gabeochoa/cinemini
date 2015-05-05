@@ -6,15 +6,18 @@ import wapi
 import time
 
 
+usable_extensions = ['mp4', 'avi', 'mov', 'mkv', 'm4v']
+
 def cinemini(inputfile):
 	starttime = time.time()
+	#vidfile = None
 	vidfile, outputsrt = TP.process_srt(inputfile) #reads file name
 	#print outputsrt
 
 	if(vidfile != None):
 		VP.editfilm(vidfile, outputsrt)
 	#print outputsrt
-	#print( str(time.time() - starttime) + " seconds")
+	print( str(time.time() - starttime) + " seconds")
 
 	return
 
@@ -36,3 +39,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     cinemini(args.inputfile)
+
+
+
+
+
+
+    

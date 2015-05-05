@@ -6,13 +6,17 @@ from moviepy.editor import VideoFileClip
 from moviepy.video.compositing.concatenate import concatenate
 import util
 import os
-import re 
+import re
+import wapi
+import util
+import operator
+import string
+
 
 #create file at path
 def touch(path):
 	with open(path, 'a'):
 		os.utime(path, None)
-
 
 data = []
 
@@ -68,12 +72,43 @@ def editfilm(videofile, procsrt):
 		print(videofile)
 		clipVideo(videofile, str(i), first, second)
 
-	combineVideos("output/output")
+	update()#combineVideos("output/output")
 
 	return
 
 
 
+
+def update():
+	print "DLHSLKJD"
+	outfilestr = "output/output"
+
+	if not os.path.isdir("output/temp"):
+		os.makedirs("output/temp")
+
+	filelist = os.listdir("output/temp/")
+	cliplist = []
+
+	i = 0
+	while i < len(filelist):
+		cliplist.append(VideoFileClip("output/temp/"+filelist[i]))
+		
+		print i
+		i+= 5
+		
+	print "con cant"
+	outputclip = concatenate(cliplist)
+
+
+	if os.path.isfile(outfilestr+".mp4"):
+		touch(outfilestr+".mp4")
+	outputclip.to_videofile(outfilestr+".mp4", codec="libx264")
+
+	return
+'''
+main()
+
+'''
 
 
 
